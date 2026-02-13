@@ -2,6 +2,8 @@
 
 A full-stack image transformation service that removes backgrounds and horizontally flips images. Upload an image, get a hosted URL for the processed result.
 
+[Demo Video](https://www.loom.com/share/b3a4cf7af9344760b242803a1d097f3e)
+
 ## Features
 
 - **Background Removal** — Powered by remove.bg API
@@ -10,6 +12,17 @@ A full-stack image transformation service that removes backgrounds and horizonta
 - **Image Management** — View, download, copy URL, and delete processed images
 - **Drag & Drop Upload** — Intuitive upload with file validation
 - **Responsive Design** — Works on mobile and desktop
+
+## Screenshots
+
+### Landing Page
+![Landing Page](public/landing%20page.png)
+
+### Processing
+![Processing](public/in%20progress.png)
+
+### Results
+![Results](public/results.png)
 
 ## Tech Stack
 

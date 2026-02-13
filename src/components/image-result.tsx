@@ -37,7 +37,29 @@ export function ImageResult({
   onReset,
 }: ImageResultProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`/api/images/${imageRecord.id}/download`);
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `processed-${imageRecord.id}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to download image");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleCopyUrl = async () => {
     try {
@@ -142,14 +164,15 @@ export function ImageResult({
           Copy URL
         </Button>
 
-        <Button variant="outline" size="sm" asChild className="shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <a
-            href={imageRecord.processedUrl}
-            download={`processed-${imageRecord.id}.png`}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </a>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          {isDownloading ? "Downloading..." : "Download"}
         </Button>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
