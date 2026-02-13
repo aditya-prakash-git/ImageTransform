@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { uploadToR2 } from "@/lib/storage";
 import { processImage } from "@/lib/image-processing";
 import { saveRecord } from "@/lib/metadata";
+import { validateEnv } from "@/lib/env";
 import { ImageRecord, UploadResponse } from "@/lib/types";
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -19,6 +20,30 @@ function getExtension(mimeType: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const { missing } = validateEnv();
+    if (missing.length > 0) {
+      console.warn(`[Upload] Missing env vars: ${missing.join(", ")}`);
+    }
+
+    if (!process.env.REMOVE_BG_API_KEY) {
+      return NextResponse.json<UploadResponse>(
+        { success: false, error: "Background removal service not configured" },
+        { status: 500 }
+      );
+    }
+    if (!process.env.R2_ENDPOINT || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_BUCKET_NAME) {
+      return NextResponse.json<UploadResponse>(
+        { success: false, error: "Storage service not configured" },
+        { status: 500 }
+      );
+    }
+    if (!process.env.R2_PUBLIC_URL) {
+      return NextResponse.json<UploadResponse>(
+        { success: false, error: "Public URL for storage not configured" },
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("image") as File | null;
 

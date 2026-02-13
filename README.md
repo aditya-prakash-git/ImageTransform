@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ImageTransform
+
+A full-stack image transformation service that removes backgrounds and horizontally flips images. Upload an image, get a hosted URL for the processed result.
+
+## Features
+
+- **Background Removal** — Powered by remove.bg API
+- **Horizontal Flip** — Server-side processing with Sharp
+- **Cloud Hosting** — Processed images hosted on Cloudflare R2 with public URLs
+- **Image Management** — View, download, copy URL, and delete processed images
+- **Drag & Drop Upload** — Intuitive upload with file validation
+- **Responsive Design** — Works on mobile and desktop
+
+## Tech Stack
+
+- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui
+- **Backend:** Next.js API Routes (TypeScript)
+- **Image Processing:** Sharp (flip), remove.bg API (background removal)
+- **Storage:** Cloudflare R2 (S3-compatible)
+- **Deployment:** Vercel
+
+## Architecture
+
+```
+Upload → Validate → Store Original (R2)
+       → Remove Background (remove.bg API)
+       → Flip Horizontally (Sharp)
+       → Store Processed (R2)
+       → Return hosted URLs
+```
+
+## API Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/upload` | Upload and process an image |
+| GET | `/api/images` | List all processed images |
+| GET | `/api/images/[id]` | Get a specific image record |
+| DELETE | `/api/images/[id]` | Delete image from storage |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- Cloudflare R2 bucket with public access
+- remove.bg API key ([get one free](https://www.remove.bg/api))
+
+### Setup
+
+1. Clone the repo:
+
+```bash
+git clone https://github.com/aditya-prakash-git/ImageTransform.git
+cd ImageTransform
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Create `.env.local` from the example:
+
+```bash
+cp .env.local.example .env.local
+```
+
+4. Fill in your environment variables:
+
+```
+REMOVE_BG_API_KEY=your_remove_bg_key
+R2_ACCESS_KEY_ID=your_r2_access_key
+R2_SECRET_ACCESS_KEY=your_r2_secret_key
+R2_BUCKET_NAME=your_bucket_name
+R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
+R2_PUBLIC_URL=https://pub-xxxx.r2.dev
+```
+
+5. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+6. Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Deployment (Vercel)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Push to GitHub
+2. Import project in Vercel
+3. Add all environment variables in Vercel project settings
+4. Deploy
 
-## Learn More
+## Design Decisions
 
-To learn more about Next.js, take a look at the following resources:
+- **In-memory metadata store:** Chose simplicity for this scope. In production, would use a database (Postgres/Redis). Image URLs remain valid in R2 regardless.
+- **Single API call for processing:** The entire pipeline (upload → remove bg → flip → store) runs in one request. For production, would use a job queue for resilience.
+- **Simulated progress steps:** Since processing is a single API call, the frontend simulates step-by-step progress for better UX feedback.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Limitations
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- In-memory store resets on server restart (images persist in R2 but metadata is lost)
+- remove.bg free tier: 50 API calls/month
+- Max file size: 10MB
